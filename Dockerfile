@@ -1,8 +1,20 @@
 FROM node:20.18.0-alpine
 
+# Instalar solo las dependencias ESENCIALES de Chromium
+RUN apk add --no-cache \
+    chromium \
+    nss \
+    freetype \
+    harfbuzz \
+    ca-certificates \
+    ttf-freefont
+
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+
 WORKDIR /app
 
-# Copiar archivos de package
+# Copiar archivos de package (para cachear la instalación)
 COPY package*.json ./
 COPY apps/api/package*.json ./apps/api/
 COPY packages/database/package*.json ./packages/database/
