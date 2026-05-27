@@ -1,6 +1,6 @@
 {
     "installCommand": "",
-    "buildCommand": "turbo run build",
+    "buildCommand": "npm run build",
     "framework": "nextjs",
     "outputDirectory": ".next"
   }
