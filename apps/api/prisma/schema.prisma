@@ -1,0 +1,216 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  STUDENT
+  ADVISOR
+  COORDINATOR
+  ADMIN
+}
+
+enum AdvanceStatus {
+  PENDING
+  AI_ANALYZING
+  AI_COMPLETE
+  IN_HUMAN_REVIEW
+  OBSERVED
+  APPROVED
+  REJECTED
+}
+
+enum ReviewStatus {
+  DRAFT
+  SUBMITTED
+}
+
+enum BulkJobStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+model InstitutionConfig {
+  id        String @id @default("default")
+  maxGrade  Float  @default(20)
+  gradeScale String @default("0-20")
+  weights   Json   @default("{\"structure\":30,\"content\":40,\"form\":20,\"originality\":10}")
+  updatedAt DateTime @updatedAt
+}
+
+model User {
+  id           String         @id @default(cuid())
+  email        String         @unique
+  passwordHash String
+  name         String
+  role         Role           @default(STUDENT)
+  programId    String?
+  program      Program?       @relation(fields: [programId], references: [id])
+  advances     Advance[]
+  reviews      Review[]
+  annotations  Annotation[]
+  bulkJobs     BulkJob[]
+  activities   ActivityLog[]
+  notifications Notification[]
+  orcidId      String?        @unique
+  createdAt    DateTime       @default(now())
+}
+
+model Program {
+  id        String           @id @default(cuid())
+  name      String
+  users     User[]
+  templates ThesisTemplate[]
+  advances  Advance[]
+}
+
+model ThesisTemplate {
+  id              String    @id @default(cuid())
+  programId       String
+  program         Program   @relation(fields: [programId], references: [id])
+  name            String
+  version         String
+  fileKey         String
+  fileType        String    @default("docx")
+  extractedSchema Json
+  rubric          Json
+  isActive        Boolean   @default(true)
+  createdById     String?
+  advances        Advance[]
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+model Advance {
+  id             String        @id @default(cuid())
+  advanceGroupId String?
+  studentId      String
+  student        User          @relation(fields: [studentId], references: [id])
+  programId      String
+  program        Program       @relation(fields: [programId], references: [id])
+  templateId     String
+  template       ThesisTemplate @relation(fields: [templateId], references: [id])
+  title          String
+  advanceType    String
+  version        Int           @default(1)
+  fileKey        String
+  fileType       String        @default("docx")
+  fileSizeBytes  Int?
+  pageCount      Int?
+  authorMeta     Json?
+  status         AdvanceStatus @default(PENDING)
+  aiAnalysis     AIAnalysis?
+  review         Review?
+  annotations    Annotation[]
+  bulkItems      BulkJobItem[]
+  plagiarism     Float?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @default(now()) @updatedAt
+
+  @@index([advanceGroupId])
+  @@index([status])
+  @@index([programId])
+}
+
+model AIAnalysis {
+  id                String   @id @default(cuid())
+  advanceId         String   @unique
+  advance           Advance  @relation(fields: [advanceId], references: [id], onDelete: Cascade)
+  overallScore      Float
+  gradeConverted    Float
+  executiveSummary  String   @db.Text
+  findings          Json
+  structureScore    Float    @default(0)
+  contentScore      Float    @default(0)
+  formScore         Float    @default(0)
+  originalityScore  Float    @default(0)
+  aiProvider        String?
+  aiModel           String?
+  missingSections   Json?
+  semanticNotes     String?  @db.Text
+  createdAt         DateTime @default(now())
+}
+
+model Review {
+  id               String       @id @default(cuid())
+  advanceId        String       @unique
+  advance          Advance      @relation(fields: [advanceId], references: [id], onDelete: Cascade)
+  reviewerId       String
+  reviewer         User         @relation(fields: [reviewerId], references: [id])
+  status           ReviewStatus @default(DRAFT)
+  finalGrade       Float?
+  humanComment     String?      @db.Text
+  findingDecisions Json?
+  checklist        Json?
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+}
+
+model Annotation {
+  id        String   @id @default(cuid())
+  advanceId String
+  advance   Advance  @relation(fields: [advanceId], references: [id], onDelete: Cascade)
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id])
+  page      Int?
+  paragraph String?
+  content   String   @db.Text
+  createdAt DateTime @default(now())
+}
+
+model BulkJob {
+  id          String        @id @default(cuid())
+  status      BulkJobStatus @default(PENDING)
+  total       Int           @default(0)
+  processed   Int           @default(0)
+  failed      Int           @default(0)
+  programId   String?
+  createdById String?
+  createdBy   User?         @relation(fields: [createdById], references: [id])
+  items       BulkJobItem[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
+model BulkJobItem {
+  id        String    @id @default(cuid())
+  bulkJobId String
+  bulkJob   BulkJob   @relation(fields: [bulkJobId], references: [id], onDelete: Cascade)
+  advanceId String?
+  advance   Advance?  @relation(fields: [advanceId], references: [id])
+  status    String    @default("PENDING")
+  error     String?   @db.Text
+}
+
+model ActivityLog {
+  id        String   @id @default(cuid())
+  type      String
+  message   String   @db.Text
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+  advanceId String?
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+  title     String
+  message   String   @db.Text
+  type      String   @default("info")
+  read      Boolean  @default(false)
+  advanceId String?
+  createdAt DateTime @default(now())
+
+  @@index([userId, read])
+}

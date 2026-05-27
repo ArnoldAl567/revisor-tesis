@@ -1,0 +1,72 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #185FA5;
+}
+
+:root {
+  --bg-page: #fdfdfb;      /* Fondo crema suave */
+  --bg-sidebar: #f7f6f2;   /* Sidebar beige */
+  --bg-card: #ffffff;      /* Tarjetas blanco puro */
+  --border-color: #e8e6e0; 
+  --text-main: #020617;    /* Texto casi negro para legibilidad máxima */
+  --text-muted: #475569;   /* Gris oscuro para labels */
+}
+
+.dark {
+  --bg-page: #0b1120;      /* Azul noche */
+  --bg-sidebar: #0f172a;
+  --bg-card: #1e293b;      /* Tarjetas oscuras */
+  --border-color: #1e293b;
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+}
+
+body {
+  @apply antialiased transition-colors duration-300;
+  background-color: var(--bg-page);
+  color: var(--text-main);
+  font-family: 'Inter', sans-serif;
+}
+
+/* Tarjetas Premium con 32px de radio */
+.card-professional {
+  @apply border transition-all duration-300;
+  background-color: var(--bg-card);
+  border-color: var(--border-color);
+  border-radius: 32px;
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.03);
+}
+
+.dark .card-professional {
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+}
+
+/* Sidebar Item Activo */
+.sidebar-active {
+  @apply !bg-white !text-slate-900 !border-[#e8e6e0] !font-bold;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.06) !important;
+}
+
+.dark .sidebar-active {
+  @apply !bg-blue-600 !text-white !border-transparent !shadow-none;
+}
+
+/* Inputs y Selects */
+.input-premium {
+  @apply text-[11px] font-bold border px-4 py-2 rounded-xl transition-all outline-none;
+  background-color: var(--bg-card);
+  border-color: var(--border-color);
+  color: var(--text-main);
+}
+
+/* Superficies generales (para páginas no migradas a card-professional) */
+.surface {
+  background-color: var(--bg-card);
+  border-color: var(--border-color);
+  color: var(--text-main);
+}
+
+.muted {
+  color: var(--text-muted);
+}

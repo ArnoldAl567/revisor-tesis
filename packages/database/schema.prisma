@@ -1,0 +1,72 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  STUDENT
+  ADVISOR
+  COORDINATOR
+  ADMIN
+}
+
+model User {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  passwordHash String
+  name         String
+  role         Role      @default(STUDENT)
+  programId    String?
+  program      Program?  @relation(fields: [programId], references: [id])
+  advances     Advance[]
+  createdAt    DateTime  @default(now())
+}
+
+model Program {
+  id        String   @id @default(cuid())
+  name      String
+  users     User[]
+  templates ThesisTemplate[]
+}
+
+model ThesisTemplate {
+  id              String    @id @default(cuid())
+  programId       String
+  program         Program   @relation(fields: [programId], references: [id])
+  name            String
+  version         String
+  fileKey         String    // S3/MinIO
+  extractedSchema Json      // Estructura extraída por IA
+  rubric          Json      // Criterios de evaluación
+  isActive        Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+}
+
+model Advance {
+  id             String        @id @default(cuid())
+  studentId      String
+  student        User          @relation(fields: [studentId], references: [id])
+  title          String
+  advanceType    String        // Ej: Capítulo 1
+  version        Int           @default(1)
+  fileKey        String
+  fileType       String
+  status         String        @default("PENDING") // PENDING, AI_ANALYZED, APPROVED, REJECTED
+  aiAnalysis     AIAnalysis?
+  createdAt      DateTime      @default(now())
+}
+
+model AIAnalysis {
+  id               String    @id @default(cuid())
+  advanceId        String    @unique
+  advance          Advance   @relation(fields: [advanceId], references: [id])
+  overallScore     Float
+  gradeConverted   Float
+  executiveSummary Text      @db.Text
+  findings         Json      // Lista de hallazgos (errores, sugerencias)
+  createdAt        DateTime  @default(now())
+}

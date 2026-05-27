@@ -1,0 +1,57 @@
+# 1. Crear el archivo .gitignore
+cat > .gitignore << 'EOF'
+# Dependencias
+node_modules/
+.pnpm-store/
+
+# Builds
+dist/
+build/
+.next/
+out/
+.cache/
+.turbo/
+
+# Variables de entorno (importante - NO subir .env)
+.env
+.env.local
+.env.production
+.env.development
+
+# Base de datos
+*.db
+*.sqlite
+*.sqlite3
+prisma/*.db
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Sistemas operativos
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Docker (ya que no funciona)
+docker-compose.yml
+Dockerfile
+.docker/
+
+# Render
+render.yaml
+*.onrender.com
+
+# Archivos temporales
+*.tmp
+*.temp
+.cache/
+EOFapps/api/uploads

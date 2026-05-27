@@ -1,0 +1,19 @@
+{
+  "name": "revisor-tesis",
+  "private": true,
+  "workspaces": [
+    "apps/api",
+    "apps/web"
+  ],
+  "scripts": {
+    "dev:api": "npm run start:dev -w api",
+    "dev:web": "npm run dev -w web",
+    "build:api": "npm run build -w api",
+    "build:web": "npm run build -w web",
+    "db:seed": "npm run prisma db seed -w api",
+    "docker:up": "docker compose up -d"
+  },
+  "devDependencies": {
+    "turbo": "^2.5.4"
+  }
+}
