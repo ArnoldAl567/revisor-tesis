@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Upload, ArrowRight, Check, Loader2 } from "lucide-react";
 import { isAxiosError } from "axios";
-import { advancesApi, programsApi, templatesApi, usersApi } from "@/lib/api";
+import { API_URL, advancesApi, programsApi, templatesApi, usersApi } from "@/lib/api";
 import { getStoredUser } from "@/lib/auth";
 import type { AiFinding, ProgramRef, ThesisTemplate, UploadPipelineResponse } from "@/lib/types";
 import { useApp } from "@/lib/ThemeContext";
@@ -18,6 +18,7 @@ export default function UploadPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [result, setResult] = useState<UploadPipelineResponse | null>(null);
   const [providers, setProviders] = useState<AiProvider[]>([]);
+  const [loadingProviders, setLoadingProviders] = useState(true);
   const [selectedProvider, setSelectedProvider] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
   const [programs, setPrograms] = useState<ProgramRef[]>([]);
@@ -51,16 +52,28 @@ export default function UploadPage() {
       .then((res) => {
         setProviders(res.data);
         if (res.data.length > 0) setSelectedProvider(res.data[0].id);
+        if (res.data.length === 0) setError(t("upload.error.noProviders"));
       })
       .catch((err) => {
         console.error(err);
         setError(
-          t("upload.error.apiOffline"),
+          t("upload.error.apiOffline", { apiUrl: API_URL }),
         );
+      })
+      .finally(() => {
+        setLoadingProviders(false);
       });
   }, []);
 
   const activeProvider = providers.find((p) => p.id === selectedProvider);
+  const submitDisabled = !file || isProcessing || loadingProviders || providers.length === 0;
+  const submitHint = loadingProviders
+    ? t("upload.status.loadingProviders")
+    : providers.length === 0
+      ? t("upload.error.noProviders")
+      : !file
+        ? t("upload.status.selectFile")
+        : null;
 
   const steps = useMemo(() => {
     const analysisLabel = activeProvider
@@ -271,12 +284,17 @@ export default function UploadPage() {
 
           <button
             onClick={handleUpload}
-            disabled={!file || isProcessing || providers.length === 0}
+            disabled={submitDisabled}
             className="w-full surface border py-4 rounded-[24px] font-bold flex items-center justify-center gap-2 hover:bg-slate-50/60 dark:hover:bg-white/5 disabled:opacity-50 transition-all shadow-sm"
           >
             {isProcessing ? <Loader2 className="animate-spin" /> : t("upload.submit")}{" "}
             <ArrowRight size={18} />
           </button>
+          {submitHint && !isProcessing && (
+            <p className="text-[11px] text-center text-slate-500 dark:text-white/50 font-semibold">
+              {submitHint}
+            </p>
+          )}
         </div>
 
         <div className="lg:col-span-2 card-professional p-8">
